@@ -25,4 +25,6 @@ COPY --from=builder pathapp .
 
 EXPOSE 8080
 
+USER 10014
+
 CMD [ "/pathapp" ]
