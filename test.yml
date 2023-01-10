@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pathapp
+  labels:
+    app: pathapp
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: pathapp
+  template:
+    metadata:
+      labels:
+        app: pathapp
+    spec:
+      containers:
+      - name: pathapp
+        image: pathapp:1.0
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 3333
+--- # We can seperate file in YAML using --- dashes instead of writing them on seperate files
+apiVersion: v1
+kind: Service # Set up the service kind
+metadata:
+  name: pathtest
+  labels:
+    app: pathtest
+spec:
+  # type: LoadBalancer # Here we use load balancer service.
+  selector:
+    app: pathapp
+  ports:
+    - port: 80
+      targetPort: 3333
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: pathtest-ing
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+spec:
+  rules:
+  - http:
+      paths:
+      # - path: /?(.*)
+      #   pathType: Prefix
+      #   backend:
+      #     service:
+      #           name: api-loadbalancer-service 
+      #           port:
+      #             number: 3333
+      - path: /api/?(.*)
+        pathType: Prefix
+        backend:
+          service:
+                name: pathtest
+                port:
+                  number: 80
